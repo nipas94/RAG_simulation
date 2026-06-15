@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RAG Simulator</title>
+
+<script src="https://cdn.tailwindcss.com"></script>
+
+<style>
+.step-active{
+    background: linear-gradient(135deg,#3b82f6,#8b5cf6);
+    color:white;
+}
+.glass{
+    background:rgba(255,255,255,.75);
+    backdrop-filter: blur(12px);
+}
+.fade{
+    animation:fade .4s ease;
+}
+@keyframes fade{
+    from{opacity:0;transform:translateY(10px)}
+    to{opacity:1;transform:translateY(0)}
+}
+</style>
+</head>
+
+<body class="bg-slate-50 min-h-screen">
+
+<div class="max-w-7xl mx-auto p-6">
+
+    <!-- HEADER -->
+    <div class="mb-8">
+        <h1 class="text-5xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+            🧠 RAG Simulator
+        </h1>
+        <p class="text-gray-600 mt-2">
+            Visualize Retrieval Augmented Generation step-by-step
+        </p>
+    </div>
+
+    <!-- PROGRESS -->
+    <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-2 mb-8">
+        <div class="step-active rounded-xl p-3 text-center">1 Upload</div>
+        <div class="glass rounded-xl p-3 text-center">2 Chunking</div>
+        <div class="glass rounded-xl p-3 text-center">3 Embedding</div>
+        <div class="glass rounded-xl p-3 text-center">4 Vector DB</div>
+        <div class="glass rounded-xl p-3 text-center">5 Query</div>
+        <div class="glass rounded-xl p-3 text-center">6 Retrieval</div>
+        <div class="glass rounded-xl p-3 text-center">7 Prompt</div>
+        <div class="glass rounded-xl p-3 text-center">8 Answer</div>
+    </div>
+
+    <div class="grid lg:grid-cols-3 gap-6">
+
+        <!-- MAIN -->
+        <div class="lg:col-span-2 space-y-6">
+
+            <!-- STEP 1 -->
+            <div class="glass rounded-2xl p-6 shadow">
+                <h2 class="text-xl font-bold mb-3">
+                    📄 Document Upload
+                </h2>
+
+                <textarea id="document"
+                    class="w-full h-40 border rounded-xl p-3"
+                >Netflix Subscription:
+Netflix charges users monthly for streaming services.
+Users can cancel subscriptions anytime.
+
+Spotify Premium:
+Spotify Premium renews automatically every month.
+Many users forget active subscriptions.</textarea>
+
+                <button onclick="processDocument()"
+                    class="mt-4 px-4 py-2 bg-blue-600 text-white rounded-xl">
+                    Process Document
+                </button>
+
+                <div id="uploadResult" class="mt-4"></div>
+            </div>
+
+            <!-- STEP 2 -->
+            <div class="glass rounded-2xl p-6 shadow">
+                <h2 class="text-xl font-bold mb-3">
+                    ✂️ Chunking
+                </h2>
+
+                <button onclick="generateChunks()"
+                    class="px-4 py-2 bg-purple-600 text-white rounded-xl">
+                    Generate Chunks
+                </button>
+
+                <div id="chunks" class="mt-4 space-y-3"></div>
+            </div>
+
+            <!-- STEP 3 -->
+            <div class="glass rounded-2xl p-6 shadow">
+                <h2 class="text-xl font-bold mb-3">
+                    🔢 Embeddings
+                </h2>
+
+                <button onclick="generateEmbeddings()"
+                    class="px-4 py-2 bg-indigo-600 text-white rounded-xl">
+                    Create Embeddings
+                </button>
+
+                <div id="embeddings" class="mt-4"></div>
+            </div>
+
+            <!-- STEP 4 -->
+            <div class="glass rounded-2xl p-6 shadow">
+                <h2 class="text-xl font-bold mb-3">
+                    🗄️ Vector Database
+                </h2>
+
+                <div id="vectorDB"></div>
+            </div>
+
+            <!-- STEP 5 -->
+            <div class="glass rounded-2xl p-6 shadow">
+                <h2 class="text-xl font-bold mb-3">
+                    ❓ User Query
+                </h2>
+
+                <input
+                    id="query"
+                    value="What subscriptions renew automatically?"
+                    class="border rounded-xl p-3 w-full"
+                >
+
+                <button onclick="embedQuery()"
+                    class="mt-3 px-4 py-2 bg-cyan-600 text-white rounded-xl">
+                    Generate Query Embedding
+                </button>
+
+                <div id="queryEmbedding" class="mt-4"></div>
+            </div>
+
+            <!-- STEP 6 -->
+            <div class="glass rounded-2xl p-6 shadow">
+                <h2 class="text-xl font-bold mb-3">
+                    🎯 Similarity Search
+                </h2>
+
+                <button onclick="runRetrieval()"
+                    class="px-4 py-2 bg-green-600 text-white rounded-xl">
+                    Run Retrieval
+                </button>
+
+                <div id="retrievalResults" class="mt-4"></div>
+            </div>
+
+            <!-- STEP 7 -->
+            <div class="glass rounded-2xl p-6 shadow">
+                <h2 class="text-xl font-bold mb-3">
+                    🧩 Prompt Construction
+                </h2>
+
+                <div id="promptBox"></div>
+            </div>
+
+            <!-- STEP 8 -->
+            <div class="glass rounded-2xl p-6 shadow">
+                <h2 class="text-xl font-bold mb-3">
+                    🤖 LLM Generation
+                </h2>
+
+                <button onclick="generateAnswer()"
+                    class="px-4 py-2 bg-pink-600 text-white rounded-xl">
+                    Generate Answer
+                </button>
+
+                <div id="answerBox" class="mt-4"></div>
+            </div>
+
+        </div>
+
+        <!-- SIDEBAR -->
+
+        <div class="space-y-6">
+
+            <div class="glass rounded-2xl p-6 shadow">
+                <h3 class="font-bold text-lg mb-3">
+                    What is RAG?
+                </h3>
+
+                <p class="text-sm">
+                    Retrieval-Augmented Generation combines
+                    vector search and LLMs.
+                </p>
+
+                <ul class="list-disc pl-5 mt-3 text-sm">
+                    <li>Reduces hallucinations</li>
+                    <li>Uses private data</li>
+                    <li>Fresh information</li>
+                    <li>No retraining required</li>
+                </ul>
+            </div>
+
+            <div class="glass rounded-2xl p-6 shadow">
+                <h3 class="font-bold mb-3">
+                    RAG Pipeline
+                </h3>
+
+                <div class="space-y-2 text-sm">
+                    <div>📄 Document</div>
+                    <div>↓</div>
+                    <div>✂️ Chunking</div>
+                    <div>↓</div>
+                    <div>🔢 Embeddings</div>
+                    <div>↓</div>
+                    <div>🗄️ Vector DB</div>
+                    <div>↓</div>
+                    <div>❓ Query</div>
+                    <div>↓</div>
+                    <div>🎯 Retrieval</div>
+                    <div>↓</div>
+                    <div>🧩 Prompt</div>
+                    <div>↓</div>
+                    <div>🤖 Answer</div>
+                </div>
+            </div>
+
+        </div>
+
+    </div>
+</div>
+
+<script>
+
+let chunks = [];
+let embeddings = [];
+let queryVector = [];
+
+function processDocument() {
+    uploadResult.innerHTML =
+        `<div class="fade text-green-600">
+            Document ingested successfully.
+        </div>`;
+}
+
+function generateChunks() {
+
+    const text = document.getElementById("document").value;
+
+    chunks = [
+        text.substring(0,120),
+        text.substring(80,220),
+        text.substring(180)
+    ];
+
+    chunksDiv = chunks.map((c,i)=>`
+        <div class="border rounded-xl p-3 fade">
+            <b>Chunk ${i+1}</b><br>
+            ${c}
+        </div>
+    `).join("");
+
+    document.getElementById("chunks").innerHTML = chunksDiv;
+}
+
+function fakeEmbedding(text){
+
+    let v=[0,0,0,0];
+
+    for(let i=0;i<text.length;i++){
+        v[i%4]+=text.charCodeAt(i);
+    }
+
+    return v.map(x=>(x/1000).toFixed(2));
+}
+
+function generateEmbeddings(){
+
+    embeddings = chunks.map(fakeEmbedding);
+
+    document.getElementById("embeddings").innerHTML =
+        embeddings.map((e,i)=>`
+            <div class="fade mt-2">
+                Chunk ${i+1}
+                →
+                [${e}]
+            </div>
+        `).join("");
+
+    document.getElementById("vectorDB").innerHTML =
+        embeddings.map((e,i)=>`
+            <div class="border p-3 rounded-xl mt-2">
+                Chunk_${i+1}<br>
+                Vector: [${e}]
+            </div>
+        `).join("");
+}
+
+function embedQuery(){
+
+    queryVector =
+        fakeEmbedding(
+            document.getElementById("query").value
+        );
+
+    queryEmbedding.innerHTML =
+        `[${queryVector}]`;
+}
+
+function runRetrieval(){
+
+    retrievalResults.innerHTML = `
+        <div class="fade p-3 bg-green-50 rounded-xl">
+            Chunk 2 → 0.92 ⭐<br>
+            Chunk 1 → 0.78<br>
+            Chunk 3 → 0.55
+        </div>
+    `;
+
+    promptBox.innerHTML = `
+<pre class="bg-slate-100 p-4 rounded-xl whitespace-pre-wrap">
+CONTEXT:
+
+Spotify Premium renews automatically every month.
+
+Netflix charges users monthly.
+
+QUESTION:
+
+What subscriptions renew automatically?
+
+INSTRUCTION:
+
+Answer only from the provided context.
+</pre>
+`;
+}
+
+function generateAnswer(){
+
+    answerBox.innerHTML = `
+<div class="fade p-4 bg-purple-50 rounded-xl">
+Based on the retrieved context,
+Spotify Premium renews automatically every month.
+
+Netflix is also a recurring monthly subscription.
+
+<hr class="my-3">
+
+<b>Important:</b>
+
+The LLM did not search the documents.
+The retrieval system provided context.
+The LLM generated the answer.
+</div>
+`;
+}
+
+</script>
+
+</body>
+</html>
